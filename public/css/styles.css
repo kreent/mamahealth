@@ -156,6 +156,16 @@ body {
   transition: all 0.2s ease;
 }
 
+.nav-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.nav-btn:disabled:hover {
+  background: transparent;
+  color: var(--text-muted);
+}
+
 .nav-btn:hover {
   background: rgba(255, 255, 255, 0.1);
   color: #fff;

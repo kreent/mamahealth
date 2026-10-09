@@ -135,11 +135,26 @@ function showToast(message, duration = 3000) {
 
 // Inicializar fecha
 let currentDate = getLocalDateString();
-if (elements.selectedDate) elements.selectedDate.value = currentDate;
+if (elements.selectedDate) {
+  elements.selectedDate.value = currentDate;
+  // No tiene sentido ver "datos" de un día que todavía no ocurre: la banda
+  // no puede haber sincronizado nada futuro, así que no se permite navegar ahí.
+  elements.selectedDate.max = getLocalDateString();
+}
+
+// Actualiza el estado visual del botón "siguiente día" y evita pasarse de hoy
+function updateDateNavState() {
+  const isToday = currentDate >= getLocalDateString();
+  if (elements.nextDayBtn) elements.nextDayBtn.disabled = isToday;
+}
+updateDateNavState();
 
 // --- Manejo de Fechas ---
 elements.selectedDate?.addEventListener('change', (e) => {
-  currentDate = e.target.value;
+  const today = getLocalDateString();
+  currentDate = e.target.value > today ? today : e.target.value;
+  elements.selectedDate.value = currentDate;
+  updateDateNavState();
   loadHealthData();
 });
 
@@ -148,20 +163,25 @@ elements.prevDayBtn?.addEventListener('click', () => {
   d.setDate(d.getDate() - 1);
   currentDate = getLocalDateString(d);
   if (elements.selectedDate) elements.selectedDate.value = currentDate;
+  updateDateNavState();
   loadHealthData();
 });
 
 elements.nextDayBtn?.addEventListener('click', () => {
+  const today = getLocalDateString();
+  if (currentDate >= today) return; // ya estamos en hoy, no hay "mañana" que mostrar
   const d = new Date(currentDate + 'T12:00:00');
   d.setDate(d.getDate() + 1);
   currentDate = getLocalDateString(d);
   if (elements.selectedDate) elements.selectedDate.value = currentDate;
+  updateDateNavState();
   loadHealthData();
 });
 
 elements.todayBtn?.addEventListener('click', () => {
   currentDate = getLocalDateString();
   if (elements.selectedDate) elements.selectedDate.value = currentDate;
+  updateDateNavState();
   loadHealthData();
 });
 
