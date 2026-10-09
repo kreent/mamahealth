@@ -86,3 +86,30 @@ Para traer las métricas reales de tu banda inteligente:
 - **Frontend**: HTML5 Semántico, CSS3 moderno con paleta wellness (diseño responsivo, modo oscuro y efectos glassmorphism), y Vanilla JavaScript.
 - **Gráficos**: Chart.js para visualización fluida de datos biométricos.
 - **Autenticación**: Flujo OAuth 2.0 estándar con refresh tokens automáticos para Google Health API v4.
+
+---
+
+## ☁️ Desplegar en Vercel (para compartir el dashboard)
+
+Localmente el servidor guarda la configuración y los tokens en `config.json` / `tokens.json`. **Vercel es serverless** — no hay disco persistente entre peticiones — así que ahí esos mismos datos viven en **variables de entorno** en vez de archivos. El código ya detecta automáticamente en qué entorno está corriendo (`process.env.VERCEL`).
+
+### Paso 1: Conectar el repo
+Importa este repositorio en [vercel.com/new](https://vercel.com/new). No hace falta configurar nada especial (`vercel.json` ya enruta todo correctamente).
+
+### Paso 2: Variables de entorno
+En **Project Settings → Environment Variables**, agrega:
+
+| Variable | Valor |
+|---|---|
+| `GOOGLE_CLIENT_ID` | El mismo Client ID de tu `config.json` local |
+| `GOOGLE_CLIENT_SECRET` | El mismo Client Secret |
+| `GOOGLE_REFRESH_TOKEN` | Ver abajo cómo obtenerlo |
+| `GEMINI_API_KEY` | Tu API key de Gemini (opcional, para el análisis con IA) |
+| `DEMO_MODE` | `false` para mostrar datos reales (si se omite, se activa solo cuando no hay `GOOGLE_REFRESH_TOKEN`) |
+
+**Para obtener `GOOGLE_REFRESH_TOKEN`:** si ya conectaste tu cuenta localmente, es el valor `refresh_token` de tu `tokens.json`. Si no, haz el flujo de conexión una vez en la URL ya desplegada (`/auth/google`) — como Vercel no puede guardar el token en disco, al terminar te mostrará una página con el valor para que lo copies aquí manualmente. Después de agregar la variable, haz un **redeploy**.
+
+### Paso 3: Redirect URI en Google Cloud Console
+Agrega `https://tu-proyecto.vercel.app/oauth2callback` como URI de redireccionamiento autorizado en las credenciales OAuth (Google Cloud Console), igual que hiciste con `http://localhost:3000/oauth2callback`.
+
+**Nota:** en Vercel, desconectar la cuenta (botón "Desconectar") no borra nada automáticamente — hay que eliminar la variable `GOOGLE_REFRESH_TOKEN` y volver a desplegar.
