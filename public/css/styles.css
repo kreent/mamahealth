@@ -1146,6 +1146,8 @@ input:checked + .slider:before { transform: translateX(22px); }
   transform: translateY(20px);
   opacity: 0;
   pointer-events: none;
+}
+
 /* ============================================================
    Sleep Card Interactive & Sleep Modal
    ============================================================ */
@@ -1438,23 +1440,233 @@ input:checked + .slider:before { transform: translateX(22px); }
   width: 100%;
 }
 
-/* Responsive */
+/* ============================================================
+   Responsive — Tablet / Mobile
+   ============================================================ */
+
 @media (max-width: 768px) {
-  .app-container {
-    padding: 16px;
-    gap: 16px;
+  html, body {
+    overflow-x: hidden;
   }
+
+  .app-container {
+    padding: 14px;
+    gap: 14px;
+  }
+
+  /* Header: marca, selector de fecha y acciones apiladas verticalmente */
   .dashboard-header {
     flex-direction: column;
     align-items: stretch;
+    padding: 16px;
+    gap: 14px;
   }
-  .header-actions {
+
+  .header-center {
+    display: flex;
+    justify-content: center;
+  }
+
+  .date-navigator {
+    width: 100%;
     justify-content: space-between;
   }
+
+  /* Botones de navegación más grandes: mejor objetivo táctil en mobile */
+  .nav-btn {
+    width: 36px;
+    height: 36px;
+    font-size: 1.4rem;
+  }
+
+  #selected-date {
+    font-size: 0.95rem;
+  }
+
+  .header-actions {
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .header-actions .btn,
+  .header-actions .status-pill {
+    flex: 1 1 auto;
+    justify-content: center;
+    white-space: nowrap;
+  }
+
+  /* Banner del dispositivo: apilar en vez de recortar texto */
+  .device-banner {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .banner-left {
+    flex-wrap: wrap;
+    row-gap: 6px;
+  }
+
+  .banner-right {
+    align-self: flex-start;
+  }
+
+  /* Tarjetas de métricas: una sola columna, valores un poco más chicos */
+  .cards-grid {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .metric-card {
+    padding: 18px;
+  }
+
+  .metric-value {
+    font-size: 1.9rem;
+  }
+
+  .metric-subtext {
+    flex-wrap: wrap;
+    gap: 6px 16px;
+  }
+
+  .hr-stats-row {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  /* Gráficos: una columna y encabezados que no se recortan */
   .charts-section {
     grid-template-columns: 1fr;
   }
+
+  .chart-card {
+    padding: 18px;
+  }
+
+  .chart-header {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
   .chart-container {
-    height: 200px;
+    height: 220px;
+  }
+
+  .sleep-legend {
+    flex-wrap: wrap;
+    row-gap: 6px;
+  }
+
+  .sleep-summary-stats {
+    flex-direction: column;
+  }
+
+  /* Modales: ocupar casi todo el ancho, sin paddings excesivos */
+  .modal-overlay {
+    padding: 12px;
+    align-items: flex-end;
+  }
+
+  .modal-card,
+  .modal-card-wide {
+    max-width: 100%;
+    max-height: 92vh;
+  }
+
+  .modal-header,
+  .modal-footer {
+    padding: 16px;
+  }
+
+  .modal-body {
+    padding: 16px;
+    max-height: 70vh;
+  }
+
+  .sleep-modal-kpis {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .modal-chart-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .sleep-history-chart-container {
+    height: 240px;
+  }
+
+  /* Correlación: controles debajo del título, tarjetas en una columna */
+  .chart-title {
+    width: 100%;
+  }
+
+  .correlation-controls {
+    width: 100%;
+  }
+
+  .correlation-controls select {
+    flex: 1;
+  }
+
+  .correlation-summary-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .metric-select-row {
+    flex-wrap: wrap;
+  }
+
+  .metric-select-row select {
+    width: 100%;
+  }
+
+  /* Toast: ancho completo con márgenes en vez de esquina fija */
+  .toast {
+    left: 14px;
+    right: 14px;
+    bottom: 14px;
+    width: auto;
+  }
+}
+
+@media (max-width: 480px) {
+  .brand-info h1 {
+    font-size: 1.2rem;
+  }
+
+  .brand-subtitle {
+    font-size: 0.72rem;
+  }
+
+  .header-actions .btn span {
+    display: none;
+  }
+
+  .header-actions .btn {
+    padding: 10px;
+  }
+
+  .status-pill {
+    font-size: 0.76rem;
+    padding: 6px 10px;
+  }
+
+  .metric-value {
+    font-size: 1.7rem;
+  }
+
+  .sleep-modal-kpis {
+    grid-template-columns: 1fr;
+  }
+
+  .correlation-summary-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .kpi-value {
+    font-size: 1.3rem;
   }
 }
