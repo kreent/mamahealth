@@ -1,0 +1,8 @@
+node_modules/
+.DS_Store
+
+# Contienen credenciales reales (OAuth client secret, tokens de acceso, API key de Gemini) —
+# el servidor los genera automáticamente la primera vez que corre (config.json queda
+# en modo demo por defecto), nunca deben subirse al repo.
+config.json
+tokens.json

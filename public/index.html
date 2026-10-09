@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HealthMama — Panel de Salud y Banda Inteligente</title>
+  <meta name="description" content="Dashboard para visualizar métricas de banda inteligente mediante Google Health API">
+  
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Chart.js para visualizaciones fluidas -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+  <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+  <!-- Overlay de carga inicial -->
+  <div id="loading-overlay" class="loading-overlay">
+    <div class="loading-spinner"></div>
+    <p class="loading-text">Cargando tus métricas de salud...</p>
+  </div>
+
+  <div class="app-container">
+    
+    <!-- Barra Superior / Header -->
+    <header class="dashboard-header">
+      <div class="header-brand">
+        <div class="brand-logo">
+          <svg class="pulse-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+          </svg>
+        </div>
+        <div class="brand-info">
+          <h1>HealthMama</h1>
+          <span class="brand-subtitle">Smart Band & Health Dashboard</span>
+        </div>
+      </div>
+
+      <div class="header-center">
+        <div class="date-navigator">
+          <button id="prev-day-btn" class="nav-btn" title="Día anterior">‹</button>
+          <div class="date-picker-wrap">
+            <svg class="calendar-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+              <line x1="16" y1="2" x2="16" y2="6"></line>
+              <line x1="8" y1="2" x2="8" y2="6"></line>
+              <line x1="3" y1="10" x2="21" y2="10"></line>
+            </svg>
+            <input type="date" id="selected-date" aria-label="Seleccionar fecha">
+          </div>
+          <button id="next-day-btn" class="nav-btn" title="Día siguiente">›</button>
+          <button id="today-btn" class="badge-btn">Hoy</button>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <!-- Indicador de Estado de Conexión -->
+        <div id="connection-status-badge" class="status-pill status-loading">
+          <span class="status-dot"></span>
+          <span id="connection-status-text">Conectando...</span>
+        </div>
+
+        <button id="sync-btn" class="btn btn-secondary" title="Sincronizar métricas de la banda">
+          <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="23 4 23 10 17 10"></polyline>
+            <polyline points="1 20 1 14 7 14"></polyline>
+            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+          </svg>
+          <span>Sincronizar</span>
+        </button>
+
+        <button id="open-config-btn" class="btn btn-primary">
+          <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="3"></circle>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+          </svg>
+          <span>Conectar / API</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Banner informativo de estado de banda -->
+    <div id="device-banner" class="device-banner">
+      <div class="banner-left">
+        <span class="device-icon">⌚</span>
+        <div>
+          <strong id="device-name">Banda Inteligente Google Health</strong>
+          <span class="banner-separator">•</span>
+          <span id="device-battery-label">Batería: <b id="device-battery">--</b></span>
+          <span class="banner-separator">•</span>
+          <span id="device-sync-label">Última sinc: <b id="device-sync-time">--:--</b></span>
+        </div>
+      </div>
+      <div class="banner-right">
+        <span id="mode-notice-badge" class="demo-tag">Cargando...</span>
+      </div>
+    </div>
+
+    <!-- Mensaje de aviso dinámico (si aplica) -->
+    <div id="alert-banner" class="alert-banner hidden">
+      <span class="alert-icon">ℹ️</span>
+      <span id="alert-message"></span>
+      <button class="alert-close" onclick="document.getElementById('alert-banner').classList.add('hidden')">×</button>
+    </div>
+
+    <!-- Contenido Principal: Tarjetas de Métricas -->
+    <main class="dashboard-content">
+      
+      <!-- Fila de Tarjetas Clave -->
+      <section class="cards-grid">
+        
+        <!-- Tarjeta: Pasos -->
+        <article class="metric-card card-steps">
+          <div class="card-header">
+            <div class="card-title-group">
+              <span class="card-icon steps-icon">👟</span>
+              <h2>Pasos <span id="steps-card-date">Hoy</span></h2>
+            </div>
+            <span class="card-badge" id="steps-percentage">--%</span>
+          </div>
+          <div class="card-body">
+            <div class="main-metric">
+              <span class="metric-value" id="steps-count">--</span>
+              <span class="metric-unit">/ <span id="steps-goal">--</span></span>
+            </div>
+            <div class="progress-bar-container">
+              <div class="progress-bar steps-bar" id="steps-progress-bar" style="width: 0%"></div>
+            </div>
+            <div class="metric-subtext">
+              <span>Distancia: <b id="distance-value">-- km</b></span>
+              <span>Minutos Activos: <b id="active-minutes-value">-- min</b></span>
+            </div>
+          </div>
+        </article>
+
+        <!-- Tarjeta: Frecuencia Cardíaca -->
+        <article class="metric-card card-heart">
+          <div class="card-header">
+            <div class="card-title-group">
+              <span class="card-icon heart-icon">❤️</span>
+              <h2>Frecuencia Cardíaca</h2>
+            </div>
+            <span class="live-pulse">BPM</span>
+          </div>
+          <div class="card-body">
+            <div class="main-metric">
+              <span class="metric-value bpm-animate" id="heart-rate-current">--</span>
+              <span class="metric-unit">BPM actual</span>
+            </div>
+            <div class="hr-stats-row">
+              <div class="hr-stat">
+                <span class="hr-label">En reposo</span>
+                <span class="hr-val" id="heart-rate-resting">-- BPM</span>
+              </div>
+              <div class="hr-stat">
+                <span class="hr-label">Mínimo</span>
+                <span class="hr-val" id="heart-rate-min">-- BPM</span>
+              </div>
+              <div class="hr-stat">
+                <span class="hr-label">Máximo</span>
+                <span class="hr-val" id="heart-rate-max">-- BPM</span>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <!-- Tarjeta: Sueño y Descanso (Interactiva) -->
+        <article class="metric-card card-sleep clickable-card" id="card-sleep-trigger" title="Haz clic para ver el detalle y gráficas de sueño">
+          <div class="card-header">
+            <div class="card-title-group">
+              <span class="card-icon sleep-icon">🌙</span>
+              <h2>Sueño & Descanso</h2>
+            </div>
+            <span class="card-badge score-badge" id="sleep-score-badge">-- / 100</span>
+          </div>
+          <div class="card-body">
+            <div class="main-metric">
+              <span class="metric-value" id="sleep-total">--</span>
+              <span class="metric-unit">dormidos</span>
+              <span class="click-hint-chip">Ver análisis ↗</span>
+            </div>
+            <div class="sleep-breakdown">
+              <div class="stage-item deep">
+                <span class="stage-dot"></span>
+                <span>Profundo: <b id="sleep-deep">--</b></span>
+              </div>
+              <div class="stage-item rem">
+                <span class="stage-dot"></span>
+                <span>REM: <b id="sleep-rem">--</b></span>
+              </div>
+              <div class="stage-item light">
+                <span class="stage-dot"></span>
+                <span>Ligero: <b id="sleep-light">--</b></span>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <!-- Tarjeta: Calorías y SpO2 -->
+        <article class="metric-card card-calories">
+          <div class="card-header">
+            <div class="card-title-group">
+              <span class="card-icon cal-icon">🔥</span>
+              <h2>Calorías & Salud</h2>
+            </div>
+            <span class="card-badge">Energía</span>
+          </div>
+          <div class="card-body">
+            <div class="main-metric">
+              <span class="metric-value" id="calories-total">--</span>
+              <span class="metric-unit">kcal totales</span>
+            </div>
+            <div class="cal-details">
+              <div class="detail-row">
+                <span>Calorías en movimiento:</span>
+                <b id="calories-active">-- kcal</b>
+              </div>
+              <div class="detail-row">
+                <span>Metabolismo basal:</span>
+                <b id="calories-bmr">-- kcal</b>
+              </div>
+              <div class="detail-row">
+                <span>Oxígeno en sangre (SpO2):</span>
+                <b id="spo2-value" class="highlight-text">--</b>
+              </div>
+            </div>
+          </div>
+        </article>
+
+      </section>
+
+      <!-- Sección de Gráficos Interactivos -->
+      <section class="charts-section">
+        
+        <!-- Gráfico 1: Pasos por Hora -->
+        <div class="chart-card">
+          <div class="chart-header">
+            <div class="chart-title">
+              <h3>Actividad y Pasos por Hora</h3>
+              <p>Distribución de movimiento a lo largo del día</p>
+            </div>
+            <span class="chart-tag">24 horas</span>
+          </div>
+          <div class="chart-container">
+            <canvas id="stepsChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Gráfico 2: Frecuencia Cardíaca Continua -->
+        <div class="chart-card">
+          <div class="chart-header">
+            <div class="chart-title">
+              <h3>Ritmo Cardíaco (BPM)</h3>
+              <p>Variación durante el día y zonas cardíacas</p>
+            </div>
+            <span class="chart-tag red-tag">Pulsaciones</span>
+          </div>
+          <div class="chart-container">
+            <canvas id="heartRateChart"></canvas>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- Fases de Sueño Detalladas -->
+      <section class="sleep-detail-section">
+        <div class="chart-card wide-chart">
+          <div class="chart-header">
+            <div class="chart-title">
+              <h3>Estructura y Calidad del Sueño</h3>
+              <p>Proporción de fases de descanso (Profundo, REM y Ligero)</p>
+            </div>
+            <div class="sleep-legend">
+              <span class="legend-item"><span class="legend-box color-deep"></span> Profundo</span>
+              <span class="legend-item"><span class="legend-box color-rem"></span> REM</span>
+              <span class="legend-item"><span class="legend-box color-light"></span> Ligero</span>
+            </div>
+          </div>
+          <div class="sleep-bar-visual" id="sleep-bar-visual"></div>
+          <div class="sleep-summary-stats">
+            <div class="summary-stat-box">
+              <span class="lbl">Tiempo en Cama</span>
+              <span class="val" id="sleep-stat-total">--</span>
+            </div>
+            <div class="summary-stat-box">
+              <span class="lbl">Eficiencia</span>
+              <span class="val text-emerald" id="sleep-stat-efficiency">--</span>
+            </div>
+            <div class="summary-stat-box">
+              <span class="lbl">Puntuación</span>
+              <span class="val text-indigo" id="sleep-stat-score">-- / 100</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Análisis de Correlación: Actividad del Día vs Sueño de Esa Noche -->
+      <section class="correlation-section">
+        <div class="chart-card wide-chart">
+          <div class="chart-header">
+            <div class="chart-title">
+              <h3>¿Tu actividad afecta tu sueño?</h3>
+              <p>Compara pasos, calorías y ritmo cardíaco de cada día con la calidad del sueño de esa misma noche</p>
+            </div>
+            <div class="correlation-controls">
+              <select id="correlation-days-select">
+                <option value="7">Últimos 7 días</option>
+                <option value="14" selected>Últimos 14 días</option>
+                <option value="30">Últimos 30 días</option>
+              </select>
+              <button id="run-correlation-btn" class="btn btn-secondary">Analizar</button>
+            </div>
+          </div>
+          <div id="correlation-results" class="correlation-results">
+            <p class="correlation-placeholder">Pulsa "Analizar" para comparar tu actividad diaria con la calidad del sueño de esa noche. Esto consulta varios días de historial y puede tardar unos segundos.</p>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- Modal de Configuración y Conexión con Google Health API -->
+    <div id="config-modal" class="modal-overlay hidden">
+      <div class="modal-card">
+        <div class="modal-header">
+          <div class="modal-title-group">
+            <span class="modal-icon">⚙️</span>
+            <div>
+              <h3>Conexión con Google Health API</h3>
+              <p>Configura el acceso para traer los datos de tu banda inteligente</p>
+            </div>
+          </div>
+          <button id="close-modal-btn" class="modal-close">&times;</button>
+        </div>
+
+        <div class="modal-tabs">
+          <button class="tab-btn active" data-tab="tab-oauth">Conectar API</button>
+          <button class="tab-btn" data-tab="tab-demo">Modo Demo</button>
+          <button class="tab-btn" data-tab="tab-guide">Guía Paso a Paso</button>
+        </div>
+
+        <div class="modal-body">
+          
+          <!-- Pestaña 1: Configurar OAuth -->
+          <div id="tab-oauth" class="tab-content active">
+            <div class="setup-instruction-box">
+              <p>Para conectar tu banda inteligente (Fitbit / Pixel Watch) vinculada a tu cuenta de Google:</p>
+              <ol>
+                <li>Crea un proyecto en <a href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noopener">Google Cloud Console</a>.</li>
+                <li>Habilita la <strong>Google Health API</strong>.</li>
+                <li>Crea credenciales <strong>ID de cliente de OAuth (Aplicación web)</strong>.</li>
+                <li>Agrega como <em>URI de redireccionamiento autorizado</em>: <code class="code-pill">http://localhost:3000/oauth2callback</code></li>
+              </ol>
+            </div>
+
+            <form id="config-form" class="config-form">
+              <div class="form-group">
+                <label for="input-client-id">Client ID de Google:</label>
+                <input type="text" id="input-client-id" placeholder="Ej: 123456789-abcdef.apps.googleusercontent.com" required>
+              </div>
+
+              <div class="form-group">
+                <label for="input-client-secret">Client Secret:</label>
+                <input type="password" id="input-client-secret" placeholder="Ej: GOCSPX-xxxxxxxxxxxxxx" required>
+              </div>
+
+              <div class="form-actions">
+                <button type="submit" class="btn btn-secondary">Guardar Credenciales</button>
+                <a id="btn-login-google" href="/auth/google" class="btn btn-google">
+                  <svg class="google-logo" viewBox="0 0 24 24">
+                    <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z"/>
+                    <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.33 24 12 24z"/>
+                    <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 10.03 0 12s.45 3.82 1.25 5.42l4.03-3.15z"/>
+                    <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.33 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/>
+                  </svg>
+                  <span>Conectar con Google Health</span>
+                </a>
+              </div>
+            </form>
+
+            <div id="auth-connected-section" class="auth-connected-section hidden">
+              <div class="user-connected-badge">
+                <span>Sesión activa: <b id="connected-user-email">tu_correo@gmail.com</b></span>
+                <button id="btn-disconnect" class="btn btn-danger-sm">Desconectar</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Pestaña 2: Modo Demo -->
+          <div id="tab-demo" class="tab-content">
+            <div class="demo-box">
+              <h4>¿Aún no has configurado la Google Cloud Console?</h4>
+              <p>Puedes usar el <strong>Modo Demostración</strong> para explorar el dashboard de inmediato con métricas realistas y gráficos interactivos completos de pasos, ritmo cardíaco y sueño.</p>
+              
+              <div class="demo-toggle-wrap">
+                <label class="switch">
+                  <input type="checkbox" id="toggle-demo-mode" checked>
+                  <span class="slider"></span>
+                </label>
+                <span class="demo-toggle-label">Activar Modo Demostración</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Pestaña 3: Guía Rápida -->
+          <div id="tab-guide" class="tab-content">
+            <div class="guide-steps">
+              <div class="step-card">
+                <span class="step-num">1</span>
+                <div>
+                  <strong>Ir a Google Cloud Console</strong>
+                  <p>Accede a <a href="https://console.cloud.google.com" target="_blank" rel="noopener">console.cloud.google.com</a> con la misma cuenta de Google vinculada a tu banda.</p>
+                </div>
+              </div>
+              <div class="step-card">
+                <span class="step-num">2</span>
+                <div>
+                  <strong>Habilitar Google Health API</strong>
+                  <p>En el menú lateral ve a <em>APIs y Servicios &gt; Biblioteca</em>, busca <strong>Google Health API</strong> y haz clic en <strong>Habilitar</strong>.</p>
+                </div>
+              </div>
+              <div class="step-card">
+                <span class="step-num">3</span>
+                <div>
+                  <strong>Configurar Pantalla de Consentimiento OAuth</strong>
+                  <p>En <em>Pantalla de consentimiento</em>, elige "Externo", completa tu correo y añade tu propio email como "Usuario de prueba".</p>
+                </div>
+              </div>
+              <div class="step-card">
+                <span class="step-num">4</span>
+                <div>
+                  <strong>Crear Credenciales OAuth</strong>
+                  <p>En <em>Credenciales &gt; Crear credenciales &gt; ID de cliente de OAuth</em>:</p>
+                  <ul>
+                    <li>Tipo: <strong>Aplicación web</strong></li>
+                    <li>URI de redireccionamiento: <code>http://localhost:3000/oauth2callback</code></li>
+                  </ul>
+                </div>
+              </div>
+              <div class="step-card">
+                <span class="step-num">5</span>
+                <div>
+                  <strong>Conectar</strong>
+                  <p>Pega el Client ID y Client Secret en la pestaña "Conectar API" y pulsa "Conectar con Google Health".</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <div class="modal-footer">
+          <button id="close-modal-footer-btn" class="btn btn-secondary">Cerrar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal: Detalle Diario de Sueño y Gráficas de Fases -->
+    <div id="sleep-modal" class="modal-overlay hidden">
+      <div class="modal-card modal-card-wide">
+        <div class="modal-header">
+          <div class="modal-title-group">
+            <span class="modal-icon">🌙</span>
+            <div>
+              <h3>Análisis Detallado de Sueño</h3>
+              <p id="sleep-modal-subtitle">Evolución de horas totales y fases (Profundo, REM, Ligero)</p>
+            </div>
+          </div>
+          <button id="close-sleep-modal-btn" class="modal-close">&times;</button>
+        </div>
+
+        <div class="modal-body">
+          <!-- Tarjetas KPI del Sueño -->
+          <div class="sleep-modal-kpis">
+            <div class="kpi-box">
+              <span class="kpi-label">Horas Dormidas</span>
+              <span class="kpi-value text-indigo" id="modal-sleep-total">--</span>
+              <span class="kpi-sub" id="modal-sleep-schedule">Acostado: --:-- • Despierto: --:--</span>
+            </div>
+            <div class="kpi-box">
+              <span class="kpi-label">Puntuación</span>
+              <span class="kpi-value text-emerald" id="modal-sleep-score">-- / 100</span>
+              <span class="kpi-sub">Calidad de descanso</span>
+            </div>
+            <div class="kpi-box">
+              <span class="kpi-label">Eficiencia</span>
+              <span class="kpi-value text-cyan" id="modal-sleep-efficiency">--</span>
+              <span class="kpi-sub" id="modal-sleep-awake">Despierto: -- min</span>
+            </div>
+            <div class="kpi-box">
+              <span class="kpi-label">Fases de la Noche</span>
+              <div class="mini-stages-row">
+                <span title="Profundo">🔵 Prof: <b id="modal-sleep-deep">--</b></span>
+                <span title="REM">🟣 REM: <b id="modal-sleep-rem">--</b></span>
+                <span title="Ligero">🟢 Lig: <b id="modal-sleep-light">--</b></span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Gráfica 1: Historial de Noches y Fases Apiladas -->
+          <div class="modal-chart-section">
+            <div class="modal-chart-header">
+              <div>
+                <h4>Historial Diario de Fases de Sueño</h4>
+                <p>Comparativa noche a noche: Total de horas desglosadas por Profundo, REM y Ligero</p>
+              </div>
+              <div class="sleep-legend">
+                <span class="legend-item"><span class="legend-box color-deep"></span> Profundo</span>
+                <span class="legend-item"><span class="legend-box color-rem"></span> REM</span>
+                <span class="legend-item"><span class="legend-box color-light"></span> Ligero</span>
+                <span class="legend-item"><span class="legend-box color-awake"></span> Despierto</span>
+              </div>
+            </div>
+            <div class="chart-container sleep-history-chart-container">
+              <canvas id="sleepHistoryChart"></canvas>
+            </div>
+          </div>
+
+          <!-- Gráfica: Horario de Sueño (hora de dormir / despertar) -->
+          <div class="modal-chart-section">
+            <div class="modal-chart-header">
+              <div>
+                <h4>Horario de Sueño</h4>
+                <p>Hora en que te dormiste y hora en que despertaste cada noche</p>
+              </div>
+              <div class="sleep-legend">
+                <span class="legend-item"><span class="legend-box color-bedtime"></span> Hora de dormir</span>
+                <span class="legend-item"><span class="legend-box color-waketime"></span> Hora de despertar</span>
+              </div>
+            </div>
+            <div class="chart-container sleep-history-chart-container">
+              <canvas id="sleepScheduleChart"></canvas>
+            </div>
+          </div>
+
+          <!-- Gráfica 2: Hipnograma / Cronología de Fases de la Noche -->
+          <div class="modal-chart-section" id="hypnogram-section">
+            <div class="modal-chart-header">
+              <div>
+                <h4>Cronología de la Noche (Hipnograma)</h4>
+                <p>Evolución y cambios de fase durante tu descanso (Despierto / REM / Ligero / Profundo)</p>
+              </div>
+              <span class="chart-tag">Línea de tiempo</span>
+            </div>
+            <div class="chart-container sleep-timeline-chart-container">
+              <canvas id="sleepTimelineChart"></canvas>
+            </div>
+          </div>
+
+        </div>
+
+        <div class="modal-footer">
+          <button id="close-sleep-modal-footer-btn" class="btn btn-secondary">Cerrar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast hidden">
+      <span id="toast-message">Métricas actualizadas</span>
+    </div>
+
+  </div>
+
+  <script src="/js/app.js"></script>
+</body>
+</html>

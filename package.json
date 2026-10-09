@@ -1,0 +1,19 @@
+{
+  "name": "healthmama-dashboard",
+  "version": "1.0.0",
+  "description": "Dashboard local para visualizar datos de banda de salud con Google Health API",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "keywords": [
+    "google-health-api",
+    "fitbit",
+    "dashboard",
+    "smartband"
+  ],
+  "author": "",
+  "license": "MIT"
+}
