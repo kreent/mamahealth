@@ -124,6 +124,11 @@ function getDateLabel(dateStr) {
   return d.toLocaleDateString('es-ES', { day: '2-digit', month: 'short' });
 }
 
+// Muestra "--" en vez de "null"/"undefined" cuando todavía no hay un dato real
+function fmtOrDash(value, suffix = '') {
+  return (value === null || value === undefined) ? '--' : `${value}${suffix}`;
+}
+
 // Mostrar notificación Toast
 function showToast(message, duration = 3000) {
   elements.toastMessage.textContent = message;
@@ -339,21 +344,21 @@ async function loadHealthData(callback) {
 
     // Ritmo Cardíaco
     const hr = data.summary.heartRate;
-    elements.heartRateCurrent.textContent = hr.current;
-    elements.heartRateResting.textContent = `${hr.resting} BPM`;
-    elements.heartRateMin.textContent = `${hr.min} BPM`;
-    elements.heartRateMax.textContent = `${hr.max} BPM`;
+    elements.heartRateCurrent.textContent = fmtOrDash(hr.current);
+    elements.heartRateResting.textContent = fmtOrDash(hr.resting, ' BPM');
+    elements.heartRateMin.textContent = fmtOrDash(hr.min, ' BPM');
+    elements.heartRateMax.textContent = fmtOrDash(hr.max, ' BPM');
 
     // Sueño
     const sleep = data.summary.sleep;
     elements.sleepTotal.textContent = sleep.totalHours;
-    elements.sleepScoreBadge.textContent = `${sleep.score} / 100`;
+    elements.sleepScoreBadge.textContent = sleep.score === null ? 'Sin datos' : `${sleep.score} / 100`;
     elements.sleepDeep.textContent = sleep.deep;
     elements.sleepRem.textContent = sleep.rem;
     elements.sleepLight.textContent = sleep.light;
     elements.sleepStatTotal.textContent = sleep.totalHours;
     elements.sleepStatEfficiency.textContent = sleep.efficiency;
-    elements.sleepStatScore.textContent = `${sleep.score} / 100`;
+    elements.sleepStatScore.textContent = sleep.score === null ? 'Sin datos' : `${sleep.score} / 100`;
 
     // Barra visual de sueño
     if (data.charts?.sleepStages) {
